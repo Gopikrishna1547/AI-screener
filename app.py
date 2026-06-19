@@ -11,11 +11,11 @@ import torch
 
 st.set_page_config(
     page_title="AI Resume Screener",
-    page_icon="🤖",
+    page_icon="AI",
     layout="wide"
 )
 
-st.title("🤖 AI Resume Screener & Job Match System")
+st.title("AI Resume Screener & Job Match System")
 st.markdown("Upload a job description and multiple CVs — AI will rank candidates by match score.")
 st.divider()
 
@@ -43,13 +43,10 @@ def extract_text_from_pdf(uploaded_file):
 
 def get_match_score(cv_text, job_text, embeddings):
     splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=30)
-
     cv_chunks = splitter.create_documents([cv_text])
     job_chunks = splitter.create_documents([job_text])
-
     if not cv_chunks or not job_chunks:
         return 0.0
-
     cv_store = FAISS.from_documents(cv_chunks, embeddings)
     scores = []
     for jchunk in job_chunks[:5]:
@@ -58,7 +55,6 @@ def get_match_score(cv_text, job_text, embeddings):
             distance = results[0][1]
             similarity = max(0, 1 - distance / 2)
             scores.append(similarity)
-
     return round(sum(scores) / len(scores) * 100, 1) if scores else 0.0
 
 def extract_skills(text, classifier):
@@ -79,17 +75,17 @@ def extract_skills(text, classifier):
 
 def get_verdict(score):
     if score >= 75:
-        return "✅ Strong Match", "success"
+        return "Strong Match", "success"
     elif score >= 55:
-        return "⚠️ Moderate Match", "warning"
+        return "Moderate Match", "warning"
     else:
-        return "❌ Weak Match", "error"
+        return "Weak Match", "error"
 
-# ── UI Layout ──
+# UI Layout
 col1, col2 = st.columns([1, 1])
 
 with col1:
-    st.subheader("📋 Job Description")
+    st.subheader("Job Description")
     job_input_type = st.radio(
         "Input method",
         ["Upload PDF", "Paste text"],
@@ -101,7 +97,7 @@ with col1:
         job_file = st.file_uploader("Upload job description PDF", type=["pdf"], key="job")
         if job_file:
             job_text = extract_text_from_pdf(job_file)
-            st.success("✅ Job description loaded!")
+            st.success("Job description loaded!")
     else:
         job_text = st.text_area(
             "Paste job description here",
@@ -110,7 +106,7 @@ with col1:
         )
 
 with col2:
-    st.subheader("📄 Candidate CVs")
+    st.subheader("Candidate CVs")
     cv_files = st.file_uploader(
         "Upload one or more CVs (PDF)",
         type=["pdf"],
@@ -118,11 +114,11 @@ with col2:
         key="cvs"
     )
     if cv_files:
-        st.success(f"✅ {len(cv_files)} CV(s) uploaded!")
+        st.success(f"{len(cv_files)} CV(s) uploaded!")
 
 st.divider()
 
-if st.button("🚀 Screen Candidates", type="primary", use_container_width=True):
+if st.button("Screen Candidates", type="primary", use_container_width=True):
     if not job_text.strip():
         st.warning("Please provide a job description first!")
     elif not cv_files:
@@ -152,10 +148,10 @@ if st.button("🚀 Screen Candidates", type="primary", use_container_width=True)
         progress.empty()
         results.sort(key=lambda x: x["score"], reverse=True)
 
-        st.subheader("📊 Candidate Rankings")
+        st.subheader("Candidate Rankings")
         for rank, r in enumerate(results, 1):
             with st.expander(
-                f"#{rank}  {r['name']}  —  Match Score: {r['score']}%  {r['verdict']}",
+                f"#{rank}  {r['name']}  —  Match Score: {r['score']}%  |  {r['verdict']}",
                 expanded=(rank == 1)
             ):
                 col_a, col_b = st.columns([1, 2])
@@ -179,7 +175,7 @@ if st.button("🚀 Screen Candidates", type="primary", use_container_width=True)
                     st.text(r["text"][:1000] + "...")
 
         st.divider()
-        st.subheader("🏆 Top Recommendation")
+        st.subheader("Top Recommendation")
         best = results[0]
         st.success(
             f"**{best['name']}** is the best match with a score of **{best['score']}%**"
